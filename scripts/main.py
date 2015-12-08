@@ -1,9 +1,17 @@
 import pandas as pd
 import numpy as np
 from sklearn import cross_validation
-from sklearn import tree
+from sklearn import linear_model
 
-COLUMNS = ['Store', 'DayOfWeek', 'Promo', 'month']
+
+COLUMNS2 = ['StoreType_a', 'StoreType_b', 'StoreType_c', 'StoreType_d',
+           'DayOfWeek_1', 'DayOfWeek_2', 'DayOfWeek_3', 'DayOfWeek_4', 'DayOfWeek_5', 'DayOfWeek_6', 'DayOfWeek_7',
+           'Promo',
+           'month_1', 'month_2', 'month_3', 'month_4', 'month_5', 'month_6', 'month_7', 'month_8', 'month_9',
+           'month_10', 'month_11', 'month_12']
+
+COLUMNS = ['DayOfWeek_1', 'DayOfWeek_2', 'DayOfWeek_3', 'DayOfWeek_4', 'DayOfWeek_5', 'DayOfWeek_6', 'DayOfWeek_7',
+           'Promo']
 
 
 def load_train():
@@ -11,12 +19,15 @@ def load_train():
     train = train.loc[train.Sales > 0]
     train['month'] = train['Date'].dt.month
     train['day'] = train['Date'].dt.day
-    return train
+    store = pd.read_csv("../data/store.csv")
+    df = pd.merge(train, store, 'left', on='Store')
+    df = pd.get_dummies(df, columns=['StoreType', 'DayOfWeek', 'month'])
+    return df
 
 
 def build_model():
     train = load_train()
-    dt = tree.DecisionTreeClassifier()
+    dt = linear_model.LinearRegression()
     return dt.fit(train[COLUMNS], train['Sales'])
 
 
@@ -33,7 +44,7 @@ def build_solution(model):
 
 def cross_validate():
     (cv_train, cv_test) = cross_validation.train_test_split(load_train())
-    dt = tree.DecisionTreeRegressor()
+    dt = linear_model.LinearRegression()
     model = dt.fit(cv_train[COLUMNS], cv_train['Sales'])
     y = model.predict(cv_test[COLUMNS])
     spe = ((cv_test['Sales'] - y) / cv_test['Sales']) ** 2.0
@@ -41,4 +52,12 @@ def cross_validate():
     print("RMSPE=%f" % rmspe)
 
 
+def solve():
+    model = build_model()
+    build_solution(model)
+
+
 cross_validate()
+# solve()
+print('Done.')
+
